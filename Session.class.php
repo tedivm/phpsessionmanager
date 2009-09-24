@@ -68,7 +68,8 @@ class SessionManager
 			{
 				// Reset session data and regenerate id
 				$_SESSION = array();
-				$_SESSION['IPaddress'] = $_SERVER['REMOTE_ADDR'];
+				$_SESSION['IPaddress'] = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+							? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
 				$_SESSION['userAgent'] = $_SERVER['HTTP_USER_AGENT'];
 				self::regenerateSession();
 
@@ -149,11 +150,15 @@ class SessionManager
 			return false;
 		}
 
-		$ipHeader = substr($_SESSION['IPaddress'], 0, 7);
-		$remoteIpHeader = substr($_SERVER['REMOTE_ADDR'], 0, 7);
+		$sessionIpSegment = substr($_SESSION['IPaddress'], 0, 7);
 
-		if($_SESSION['IPaddress'] != $_SERVER['REMOTE_ADDR']
-			&& !(in_array($ipHeader, $this->aolProxies) && in_array($remoteIpHeader, $this->aolProxies)))
+		$remoteIpHeader = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+			? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+
+		$remoteIpSegment = substr($remoteIpHeader, 0, 7);
+
+		if($_SESSION['IPaddress'] != $remoteIpHeader
+			&& !(in_array($sessionIpSegment, $this->aolProxies) && in_array($remoteIpSegment, $this->aolProxies)))
 		{
 			return false;
 		}
